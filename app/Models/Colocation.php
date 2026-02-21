@@ -35,6 +35,11 @@ class Colocation extends Model
             ->withTimestamps();
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class)->orderBy('due_date')->orderBy('created_at');
+    }
+
     /**
      * Vérifie si un utilisateur est membre de la colocation.
      */

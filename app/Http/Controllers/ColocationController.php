@@ -86,7 +86,7 @@ class ColocationController extends Controller
             abort(403, 'Vous n\'avez pas accès à cette colocation.');
         }
 
-        $colocation->load('members', 'owner');
+        $colocation->load(['members', 'owner', 'tasks.assignedTo']);
 
         return view('colocations.show', compact('colocation'));
     }
