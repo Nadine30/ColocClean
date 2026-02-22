@@ -90,4 +90,35 @@ class ColocationController extends Controller
 
         return view('colocations.show', compact('colocation'));
     }
+
+    /**
+     * Quitter une colocation. Si créateur et seul membre, la colocation est supprimée.
+     */
+    public function leave(Request $request, Colocation $colocation)
+    {
+        if (! $colocation->hasMember($request->user())) {
+            abort(403, 'Vous n\'avez pas accès à cette colocation.');
+        }
+
+        $user = $request->user();
+        $membersCount = $colocation->members()->count();
+
+        if ($colocation->owner_id === $user->id) {
+            if ($membersCount === 1) {
+                $name = $colocation->name;
+                $colocation->delete();
+                return redirect()
+                    ->route('colocations.index')
+                    ->with('success', 'Vous avez quitté la colocation "' . $name . '". Celle-ci a été supprimée car vous étiez le dernier membre.');
+            }
+            $newOwner = $colocation->members()->where('user_id', '!=', $user->id)->orderBy('user_id')->first();
+            $colocation->update(['owner_id' => $newOwner->id]);
+        }
+
+        $colocation->members()->detach($user->id);
+
+        return redirect()
+            ->route('colocations.index')
+            ->with('success', 'Vous avez quitté la colocation "' . $colocation->name . '".');
+    }
 }

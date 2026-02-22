@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/colocations', [ColocationController::class, 'store'])->name('colocations.store');
     Route::post('/colocations/join', [ColocationController::class, 'join'])->name('colocations.join');
     Route::get('/colocations/{colocation}', [ColocationController::class, 'show'])->name('colocations.show');
+    Route::post('/colocations/{colocation}/leave', [ColocationController::class, 'leave'])->name('colocations.leave');
 
     Route::post('/colocations/{colocation}/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::patch('/colocations/{colocation}/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');

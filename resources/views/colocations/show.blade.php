@@ -4,11 +4,15 @@
 
 @section('content')
     <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
             <div>
                 <a href="{{ route('colocations.index') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block">← Mes colocations</a>
                 <h1 class="text-2xl font-semibold text-gray-900">{{ $colocation->name }}</h1>
             </div>
+            <form action="{{ route('colocations.leave', $colocation) }}" method="POST" class="inline" onsubmit="return confirm('Quitter cette colocation ? Vous ne pourrez plus accéder à ses tâches.');">
+                @csrf
+                <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Quitter la colocation</button>
+            </form>
         </div>
 
         {{-- Code d'invitation (visible par tous les membres) --}}
