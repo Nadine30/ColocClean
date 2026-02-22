@@ -37,6 +37,11 @@ class Task extends Model
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)->orderBy('created_at');
+    }
+
     public function isDone(): bool
     {
         return $this->status === self::STATUS_DONE;

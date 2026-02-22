@@ -123,43 +123,68 @@
             @else
                 <ul class="divide-y divide-gray-200">
                     @foreach ($colocation->tasks as $task)
-                        <li class="py-4 flex flex-wrap items-center gap-3 {{ $task->isDone() ? 'opacity-75' : '' }}">
-                            <div class="flex-1 min-w-0">
-                                <span class="font-medium {{ $task->isDone() ? 'line-through text-gray-500' : 'text-gray-900' }}">{{ $task->title }}</span>
-                                <span class="text-gray-500 text-sm ml-2">échéance {{ $task->due_date->format('d/m/Y') }}</span>
-                                <span class="text-gray-500 text-sm">— {{ $task->assignedTo->name }}</span>
+                        <li class="py-4 {{ $task->isDone() ? 'opacity-75' : '' }}">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <span class="font-medium {{ $task->isDone() ? 'line-through text-gray-500' : 'text-gray-900' }}">{{ $task->title }}</span>
+                                    <span class="text-gray-500 text-sm ml-2">échéance {{ $task->due_date->format('d/m/Y') }}</span>
+                                    <span class="text-gray-500 text-sm">— {{ $task->assignedTo->name }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    @if ($task->isDone())
+                                        <span class="text-sm text-green-600 font-medium">
+                                            Fait
+                                            @if ($task->completed_at && $task->completedBy)
+                                                par {{ $task->completedBy->name }} le {{ $task->completed_at->format('d/m/Y à H:i') }}
+                                            @endif
+                                        </span>
+                                    @else
+                                        <form action="{{ route('tasks.update', [$colocation, $task]) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status" value="done">
+                                            <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Marquer comme fait</button>
+                                        </form>
+                                        <form action="{{ route('tasks.update', [$colocation, $task]) }}" method="POST" class="inline flex items-center gap-1">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="assigned_to" class="text-sm rounded border-gray-300 py-0.5" onchange="this.form.submit()">
+                                                @foreach ($colocation->members as $member)
+                                                    <option value="{{ $member->id }}" {{ $task->assigned_to === $member->id ? 'selected' : '' }}>{{ $member->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <span class="text-xs text-gray-500">Réassigner</span>
+                                        </form>
+                                    @endif
+                                    <form action="{{ route('tasks.destroy', [$colocation, $task]) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cette tâche ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Supprimer</button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                @if ($task->isDone())
-                                    <span class="text-sm text-green-600 font-medium">
-                                        Fait
-                                        @if ($task->completed_at && $task->completedBy)
-                                            par {{ $task->completedBy->name }} le {{ $task->completed_at->format('d/m/Y à H:i') }}
-                                        @endif
-                                    </span>
-                                @else
-                                    <form action="{{ route('tasks.update', [$colocation, $task]) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="done">
-                                        <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Marquer comme fait</button>
-                                    </form>
-                                    <form action="{{ route('tasks.update', [$colocation, $task]) }}" method="POST" class="inline flex items-center gap-1">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="assigned_to" class="text-sm rounded border-gray-300 py-0.5" onchange="this.form.submit()">
-                                            @foreach ($colocation->members as $member)
-                                                <option value="{{ $member->id }}" {{ $task->assigned_to === $member->id ? 'selected' : '' }}>{{ $member->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <span class="text-xs text-gray-500">Réassigner</span>
-                                    </form>
+                            {{-- Commentaires --}}
+                            <div class="mt-3 pl-2 border-l-2 border-gray-100">
+                                @if ($task->comments->isNotEmpty())
+                                    <ul class="space-y-2 mb-3">
+                                        @foreach ($task->comments as $comment)
+                                            <li class="text-sm text-gray-600">
+                                                <span class="font-medium text-gray-800">{{ $comment->user->name }}</span>
+                                                <span class="text-gray-400 text-xs">{{ $comment->created_at->format('d/m/Y H:i') }}</span>
+                                                <p class="mt-0.5">{{ nl2br(e($comment->body)) }}</p>
+                                            </li>
+                                        @endforeach
+                                    </ul>
                                 @endif
-                                <form action="{{ route('tasks.destroy', [$colocation, $task]) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cette tâche ?');">
+                                <form action="{{ route('task-comments.store', [$colocation, $task]) }}" method="POST" class="flex gap-2">
                                     @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Supprimer</button>
+                                    <input type="text" name="body" value="{{ old('body', '') }}" placeholder="Ajouter un commentaire…" required maxlength="2000"
+                                        class="flex-1 rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <button type="submit" class="rounded-md bg-gray-600 px-3 py-1.5 text-sm text-white hover:bg-gray-700">Envoyer</button>
                                 </form>
+                                @error('body')
+                                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                         </li>
                     @endforeach
