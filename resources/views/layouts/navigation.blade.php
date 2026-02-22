@@ -21,8 +21,42 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <!-- Notifications + Settings -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-2">
+                @php
+                    $unreadNotifications = Auth::user()->unreadNotifications()->take(10)->get();
+                    $unreadCount = Auth::user()->unreadNotifications()->count();
+                @endphp
+                <x-dropdown align="right" width="80">
+                    <x-slot name="trigger">
+                        <button class="relative inline-flex items-center p-2 text-gray-500 hover:text-gray-700 focus:outline-none rounded-md">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75v-.7V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                            </svg>
+                            @if ($unreadCount > 0)
+                                <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                            @endif
+                        </button>
+                    </x-slot>
+                    <x-slot name="content">
+                        <div class="px-4 py-2 border-b border-gray-200">
+                            <span class="text-sm font-medium text-gray-800">Notifications</span>
+                        </div>
+                        @if ($unreadNotifications->isEmpty())
+                            <div class="px-4 py-3 text-sm text-gray-500">Aucune notification.</div>
+                        @else
+                            @foreach ($unreadNotifications as $notification)
+                                <a href="{{ route('notifications.markAsRead', $notification->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    {{ $notification->data['message'] ?? 'Rappel tâche(s)' }}
+                                </a>
+                            @endforeach
+                            <form method="POST" action="{{ route('notifications.markAllAsRead') }}" class="border-t border-gray-200">
+                                @csrf
+                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-gray-50">Tout marquer comme lu</button>
+                            </form>
+                        @endif
+                    </x-slot>
+                </x-dropdown>
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -70,6 +104,14 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
+            @php
+                $unreadCountMobile = Auth::user()->unreadNotifications()->count();
+            @endphp
+            @if ($unreadCountMobile > 0)
+                <a href="{{ route('colocations.index') }}" class="block px-4 py-2 text-base text-gray-600 hover:text-gray-800">
+                    Notifications ({{ $unreadCountMobile }})
+                </a>
+            @endif
             <x-responsive-nav-link :href="route('colocations.index')" :active="request()->routeIs('colocations.*')">
                 {{ __('Mes colocations') }}
             </x-responsive-nav-link>
