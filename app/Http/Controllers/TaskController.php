@@ -73,4 +73,24 @@ class TaskController extends Controller
 
         return redirect()->route('colocations.show', $colocation);
     }
+
+    /**
+     * Supprimer une tâche.
+     */
+    public function destroy(Request $request, Colocation $colocation, Task $task)
+    {
+        if (! $colocation->hasMember($request->user())) {
+            abort(403, 'Vous n\'avez pas accès à cette colocation.');
+        }
+
+        if ($task->colocation_id !== $colocation->id) {
+            abort(404);
+        }
+
+        $task->delete();
+
+        return redirect()
+            ->route('colocations.show', $colocation)
+            ->with('success', 'Tâche supprimée.');
+    }
 }

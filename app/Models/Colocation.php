@@ -40,6 +40,11 @@ class Colocation extends Model
         return $this->hasMany(Task::class)->orderBy('due_date')->orderBy('created_at');
     }
 
+    public function taskTemplates()
+    {
+        return $this->hasMany(TaskTemplate::class)->orderBy('title');
+    }
+
     /**
      * Vérifie si un utilisateur est membre de la colocation.
      */

@@ -18,6 +18,59 @@
             <p class="text-2xl font-mono font-bold tracking-wider text-indigo-600">{{ $colocation->invitation_code }}</p>
         </div>
 
+        {{-- Modèles de tâches récurrentes --}}
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Modèles de tâches récurrentes</h2>
+            <p class="text-gray-500 text-sm mb-4">Définissez des tâches types pour les recréer rapidement (ex. « Sortir les poubelles », « Nettoyer la salle de bain »).</p>
+
+            <form action="{{ route('task-templates.store', $colocation) }}" method="POST" class="flex gap-2 mb-4">
+                @csrf
+                <input type="text" name="title" value="{{ old('title') }}" placeholder="Ex: Sortir les poubelles" required maxlength="255"
+                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <button type="submit" class="rounded-md bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Ajouter le modèle</button>
+            </form>
+            @error('title')
+                <p class="text-red-600 text-sm mb-2">{{ $message }}</p>
+            @enderror
+
+            @if ($colocation->taskTemplates->isNotEmpty())
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <form action="{{ route('task-templates.generate-week', $colocation) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+                            Générer les tâches de la semaine
+                        </button>
+                    </form>
+                    <span class="text-gray-500 text-sm">→ une tâche par modèle, échéance vendredi, répartition entre les membres</span>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    @foreach ($colocation->taskTemplates as $template)
+                        <li class="py-3 flex flex-wrap items-center gap-3">
+                            <span class="font-medium text-gray-900">{{ $template->title }}</span>
+                            <form action="{{ route('task-templates.create-task', [$colocation, $template]) }}" method="POST" class="inline-flex flex-wrap items-center gap-2">
+                                @csrf
+                                <input type="date" name="due_date" value="{{ \Carbon\Carbon::now()->addDays(7)->format('Y-m-d') }}" min="{{ date('Y-m-d') }}"
+                                    class="rounded-md border-gray-300 shadow-sm text-sm">
+                                <select name="assigned_to" class="rounded-md border-gray-300 shadow-sm text-sm py-0.5" required>
+                                    @foreach ($colocation->members as $member)
+                                        <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Créer une tâche</button>
+                            </form>
+                            <form action="{{ route('task-templates.destroy', [$colocation, $template]) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce modèle ?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Supprimer</button>
+                            </form>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="text-gray-500 text-sm">Aucun modèle. Ajoutez-en un ci-dessus pour pouvoir générer les tâches de la semaine en un clic.</p>
+            @endif
+        </div>
+
         {{-- Tâches --}}
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Tâches</h2>
@@ -72,7 +125,7 @@
                                 <span class="text-gray-500 text-sm ml-2">échéance {{ $task->due_date->format('d/m/Y') }}</span>
                                 <span class="text-gray-500 text-sm">— {{ $task->assignedTo->name }}</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 @if ($task->isDone())
                                     <span class="text-sm text-green-600 font-medium">
                                         Fait
@@ -98,6 +151,11 @@
                                         <span class="text-xs text-gray-500">Réassigner</span>
                                     </form>
                                 @endif
+                                <form action="{{ route('tasks.destroy', [$colocation, $task]) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cette tâche ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Supprimer</button>
+                                </form>
                             </div>
                         </li>
                     @endforeach
