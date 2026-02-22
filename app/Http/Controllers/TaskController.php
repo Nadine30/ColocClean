@@ -50,7 +50,11 @@ class TaskController extends Controller
         }
 
         if ($request->has('status') && $request->status === Task::STATUS_DONE) {
-            $task->update(['status' => Task::STATUS_DONE]);
+            $task->update([
+                'status' => Task::STATUS_DONE,
+                'completed_at' => now(),
+                'completed_by' => $request->user()->id,
+            ]);
             return redirect()
                 ->route('colocations.show', $colocation)
                 ->with('success', 'Tâche marquée comme faite.');

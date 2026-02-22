@@ -74,7 +74,12 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 @if ($task->isDone())
-                                    <span class="text-sm text-green-600 font-medium">Fait</span>
+                                    <span class="text-sm text-green-600 font-medium">
+                                        Fait
+                                        @if ($task->completed_at && $task->completedBy)
+                                            par {{ $task->completedBy->name }} le {{ $task->completed_at->format('d/m/Y à H:i') }}
+                                        @endif
+                                    </span>
                                 @else
                                     <form action="{{ route('tasks.update', [$colocation, $task]) }}" method="POST" class="inline">
                                         @csrf
@@ -99,6 +104,31 @@
                 </ul>
             @endif
         </div>
+
+        {{-- Historique (tâches effectuées) --}}
+        @php
+            $completedTasks = $colocation->tasks->where('status', 'done')->sortByDesc(fn ($t) => $t->completed_at?->getTimestamp() ?? 0)->values();
+        @endphp
+        @if ($completedTasks->isNotEmpty())
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Historique</h2>
+                <p class="text-gray-500 text-sm mb-4">Qui a effectué quelle tâche et à quelle date.</p>
+                <ul class="divide-y divide-gray-200">
+                    @foreach ($completedTasks as $task)
+                        <li class="py-3 flex flex-wrap items-baseline gap-2">
+                            <span class="font-medium text-gray-900">{{ $task->title }}</span>
+                            <span class="text-gray-500 text-sm">
+                                @if ($task->completed_at && $task->completedBy)
+                                    — Fait par <strong>{{ $task->completedBy->name }}</strong> le {{ $task->completed_at->format('d/m/Y à H:i') }}
+                                @else
+                                    — Fait
+                                @endif
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         {{-- Membres --}}
         <div class="bg-white rounded-lg shadow p-6">

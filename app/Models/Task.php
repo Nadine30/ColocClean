@@ -12,12 +12,13 @@ class Task extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_DONE = 'done';
 
-    protected $fillable = ['colocation_id', 'title', 'due_date', 'assigned_to', 'status'];
+    protected $fillable = ['colocation_id', 'title', 'due_date', 'assigned_to', 'status', 'completed_at', 'completed_by'];
 
     protected function casts(): array
     {
         return [
             'due_date' => 'date',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -29,6 +30,11 @@ class Task extends Model
     public function assignedTo()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 
     public function isDone(): bool
